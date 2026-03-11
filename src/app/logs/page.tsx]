@@ -1,0 +1,111 @@
+"use client";
+import { useEffect, useState } from "react";
+
+interface ScoreItem {
+  userId: string;
+  point: number;
+  matchDate: string;
+  gameId: string;
+  season: string;
+}
+
+export default function LogsPage() {
+  const [allData, setAllData] = useState<ScoreItem[]>([]);
+  const [selectedSeason, setSelectedSeason] = useState<string>("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      const res = await fetch("/api/get-all-scores");
+      const data = await res.json();
+      setAllData(data);
+      if (data.length > 0) {
+        const seasons = Array.from(new Set(data.map((item: any) => item.season))).sort().reverse();
+        setSelectedSeason(seasons[0] as string);
+      }
+      setLoading(false);
+    }
+    fetchData();
+  }, []);
+
+  // 1. 選択されたシーズンのデータを抽出
+  const seasonData = allData.filter(item => item.season === selectedSeason);
+
+  // 2. gameId ごとにデータをまとめる
+  const gamesMap = seasonData.reduce((acc: any, cur) => {
+    if (!acc[cur.gameId]) {
+      acc[cur.gameId] = { 
+        gameId: cur.gameId, 
+        date: cur.matchDate, 
+        scores: {} 
+      };
+    }
+    acc[cur.gameId].scores[cur.userId] = cur.point;
+    return acc;
+  }, {});
+
+  // 3. 日付（またはgameId）の降順（新しい順）に並び替え
+  const sortedGames = Object.values(gamesMap).sort((a: any, b: any) => b.gameId.localeCompare(a.gameId));
+
+  // プレイヤー一覧を取得（列ヘッダー用）
+  const playerNames = Array.from(new Set(allData.map(item => item.userId)));
+
+  if (loading) return <div className="flex justify-center items-center h-screen"><div className="animate-spin h-8 w-8 border-4 border-blue-500 rounded-full border-t-transparent"></div></div>;
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-8 px-4">
+      <div className="max-w-5xl mx-auto">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+          <h1 className="text-3xl font-bold text-gray-800">📝 対局履歴</h1>
+          <select 
+            value={selectedSeason} 
+            onChange={(e) => setSelectedSeason(e.target.value)}
+            className="bg-white border border-gray-300 rounded-lg px-4 py-2 shadow-sm focus:ring-2 focus:ring-blue-500 outline-none"
+          >
+            {Array.from(new Set(allData.map(i => i.season))).sort().reverse().map(s => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-800 text-white text-xs uppercase tracking-wider">
+                  <th className="py-4 px-4 text-left min-w-[100px]">対局日</th>
+                  {playerNames.map(name => (
+                    <th key={name} className="py-4 px-4 text-center">{name}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {sortedGames.map((game: any) => (
+                  <tr key={game.gameId} className="hover:bg-blue-50 transition-colors text-sm">
+                    <td className="py-4 px-4 font-medium text-gray-600">
+                      {game.date.replace(/-/g, '/')}
+                    </td>
+                    {playerNames.map(name => {
+                      const score = game.scores[name];
+                      return (
+                        <td key={name} className={`py-4 px-4 text-center font-mono font-bold ${
+                          score > 0 ? 'text-blue-600' : score < 0 ? 'text-red-500' : 'text-gray-400'
+                        }`}>
+                          {score !== undefined ? (score > 0 ? `+${score.toFixed(1)}` : score.toFixed(1)) : '-'}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <p className="mt-4 text-center text-gray-500 text-sm">
+          ※ {selectedSeason} の全 {sortedGames.length} 局を表示中
+        </p>
+      </div>
+    </div>
+  );
+}
