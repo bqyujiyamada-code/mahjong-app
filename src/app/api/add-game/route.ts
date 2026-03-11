@@ -12,7 +12,7 @@ export async function POST(req: Request) {
         // 最新のgameIdを取得して、次のIDを決める
         const allData = await docClient.send(new ScanCommand({ TableName: "MahjongScores" }));
         const maxId = allData.Items?.reduce((max, item) => {
-            const id = parseInt(item.gameId.S.replace("game_", ""));
+            const id = parseInt((item.gameId?.S || "game_0").replace("game_", ""));
             return id > max ? id : max;
         }, 0) || 0;
         const newGameId = `game_${String(maxId + 1).padStart(4, '0')}`;
