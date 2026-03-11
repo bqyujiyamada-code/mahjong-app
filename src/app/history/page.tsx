@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link"; // 追加
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 interface ScoreItem {
@@ -31,14 +32,12 @@ export default function HistoryPage() {
 
   const chartData = () => {
     const seasonData = allData.filter(item => item.season === selectedSeason);
-    // 日付順に並び替えるために、まずgameIdまたは日付でソート
     const sortedGames = Array.from(new Set(seasonData.map(item => item.gameId))).sort();
     
     let userTotals: { [key: string]: number } = {};
     
     return sortedGames.map(gameId => {
       const gameResults = seasonData.filter(d => d.gameId === gameId);
-      // 日付を "2024-05-10" -> "5/10" 形式に変換
       const rawDate = gameResults[0]?.matchDate || "";
       const dateLabel = rawDate ? `${new Date(rawDate).getMonth() + 1}/${new Date(rawDate).getDate()}` : "";
       
@@ -57,20 +56,30 @@ export default function HistoryPage() {
   const users = Array.from(new Set(allData.map(item => item.userId)));
   const colors = ["#3b82f6", "#ef4444", "#10b981", "#f59e0b", "#8b5cf6"];
 
-  // 動的な幅の計算（1局あたり最小60px確保、画面幅より小さくならないようにする）
   const dynamicWidth = Math.max(currentChartData.length * 60, 600);
 
   if (loading) return <div className="flex justify-center items-center h-screen"><div className="animate-spin h-8 w-8 border-4 border-blue-500 rounded-full border-t-transparent"></div></div>;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
+    <div className="min-h-screen bg-gray-50 py-4 px-4">
       <div className="max-w-4xl mx-auto">
+        
+        {/* --- ナビゲーション追加 --- */}
+        <div className="mb-6">
+          <Link href="/" className="text-sm font-bold text-gray-600 hover:text-gray-900 flex items-center gap-1">
+            🏠 ホームに戻る
+          </Link>
+        </div>
+        {/* ----------------------- */}
+
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
-          <h1 className="text-3xl font-bold text-gray-800">📈 ポイント推移</h1>
+          <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-2">
+            📈 ポイント推移
+          </h1>
           <select 
             value={selectedSeason} 
             onChange={(e) => setSelectedSeason(e.target.value)}
-            className="bg-white border border-gray-300 rounded-lg px-4 py-2 shadow-sm focus:ring-2 focus:ring-blue-500 outline-none"
+            className="bg-white border border-gray-300 rounded-lg px-4 py-2 shadow-sm focus:ring-2 focus:ring-blue-500 outline-none font-bold text-gray-700"
           >
             {Array.from(new Set(allData.map(i => i.season))).sort().reverse().map(s => (
               <option key={s} value={s}>{s}</option>
@@ -79,7 +88,6 @@ export default function HistoryPage() {
         </div>
 
         <div className="bg-white p-4 rounded-xl shadow-md border border-gray-100">
-          {/* 横スクロール用のコンテナ */}
           <div className="overflow-x-auto pb-4">
             <div style={{ width: `${dynamicWidth}px`, height: '400px' }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -98,7 +106,7 @@ export default function HistoryPage() {
                       dataKey={user} 
                       stroke={colors[index % colors.length]} 
                       strokeWidth={3} 
-                      dot={{ r: 4 }} // プロットの点を表示
+                      dot={{ r: 4 }} 
                       activeDot={{ r: 6 }}
                     />
                   ))}

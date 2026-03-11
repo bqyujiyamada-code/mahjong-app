@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link"; // 追加
 
 interface ScoreItem {
   userId: string;
@@ -19,9 +20,16 @@ export default function LogsPage() {
     const res = await fetch("/api/get-all-scores");
     const data = await res.json();
     setAllData(data);
-    if (data.length > 0 && !selectedSeason) {
+    
+    if (data.length > 0) {
       const seasons = Array.from(new Set(data.map((item: any) => item.season))).sort().reverse();
-      setSelectedSeason(seasons[0] as string);
+      
+      // --- URLパラメータからシーズンを取得するロジックを追加 ---
+      const params = new URLSearchParams(window.location.search);
+      const seasonParam = params.get('season');
+      const targetSeason = (seasonParam && seasons.includes(seasonParam)) ? seasonParam : seasons[0];
+      
+      setSelectedSeason(targetSeason as string);
     }
     setLoading(false);
   };
@@ -39,7 +47,7 @@ export default function LogsPage() {
       });
       if (res.ok) {
         alert("削除しました");
-        fetchData(); // データを再読み込み
+        fetchData(); 
       } else {
         alert("削除に失敗しました");
       }
@@ -63,14 +71,29 @@ export default function LogsPage() {
   if (loading) return <div className="flex justify-center items-center h-screen font-bold text-blue-500">Loading...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-6 px-2">
+    <div className="min-h-screen bg-gray-50 py-4 px-2">
       <div className="max-w-5xl mx-auto">
+        
+        {/* --- ナビゲーション追加 --- */}
+        <div className="flex justify-between items-center mb-6 px-2">
+          <Link href="/" className="text-sm font-bold text-gray-600 hover:text-gray-900 flex items-center gap-1">
+            🏠 ホーム
+          </Link>
+          <Link 
+            href={`/ranking?season=${selectedSeason}`} 
+            className="text-sm font-bold text-orange-600 hover:text-orange-800 flex items-center gap-1 bg-orange-50 px-3 py-1.5 rounded-full transition-colors"
+          >
+            🏆 ランキングを見る →
+          </Link>
+        </div>
+        {/* ----------------------- */}
+
         <div className="flex justify-between items-center mb-6 px-2">
           <h1 className="text-xl font-black text-gray-800 flex items-center gap-2">📝 対局履歴</h1>
           <select 
             value={selectedSeason} 
             onChange={(e) => setSelectedSeason(e.target.value)}
-            className="bg-white border border-gray-300 rounded-xl px-2 py-2 text-xs font-bold shadow-sm"
+            className="bg-white border border-gray-300 rounded-xl px-2 py-2 text-xs font-bold shadow-sm outline-none focus:ring-2 focus:ring-blue-500"
           >
             {Array.from(new Set(allData.map(i => i.season))).sort().reverse().map(s => (
               <option key={s} value={s}>{s}</option>
@@ -104,7 +127,6 @@ export default function LogsPage() {
                         </td>
                       );
                     })}
-                    {/* 削除ボタン */}
                     <td className="py-4 px-2 text-center">
                       <button 
                         onClick={() => handleDelete(game.gameId, game.date)}
