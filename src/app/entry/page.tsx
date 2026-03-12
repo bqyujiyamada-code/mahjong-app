@@ -106,13 +106,13 @@ export default function EntryPage() {
 
             <div>
               <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 ml-1">Match Date</label>
-              <input 
-                type="date" 
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full border-gray-200 border rounded-2xl p-3 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 font-medium text-sm"
-                required
-              />
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="w-full box-border appearance-none border-gray-200 border rounded-2xl p-3 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 font-medium text-base"
+              required
+            />
               <p className="text-[11px] text-blue-500 mt-2 ml-1 font-bold">🏆 {getSeasonName(date)}</p>
             </div>
 
