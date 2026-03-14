@@ -170,7 +170,7 @@ export default function EntryPage() {
                 isZero && !loading ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-200' : 'bg-gray-300 cursor-not-allowed shadow-none'
               }`}
             >
-              {loading ? "SAVING..." : "合計チェック"}
+              {loading ? "SAVING..." : "登録"}
             </button>
           </form>
         </div>
