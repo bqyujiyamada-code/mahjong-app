@@ -56,7 +56,7 @@ export default function MainMenu() {
       {/* ヘッダー・現在の首位 */}
       <div className="w-full max-w-sm bg-white rounded-3xl shadow-xl p-6 mb-8 border border-gray-100 relative overflow-hidden">
         <div className="absolute top-0 right-0 p-4 opacity-10 text-6xl rotate-12">🀄</div>
-        <h2 className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-1">Current Leader</h2>
+        <h2 className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-1">今シーズンの首位</h2>
         {loading ? (
           <div className="h-10 w-24 bg-gray-100 animate-pulse rounded"></div>
         ) : (

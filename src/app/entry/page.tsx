@@ -105,7 +105,7 @@ export default function EntryPage() {
             )}
 
             <div>
-              <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 ml-1">Match Date</label>
+              <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 ml-1">対局日</label>
             <input
               type="date"
               value={date}
@@ -117,7 +117,7 @@ export default function EntryPage() {
             </div>
 
             <div className="space-y-2.5">
-              <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 ml-1">Players & Scores</label>
+              <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 ml-1">参加者・Pt</label>
               {playerNames.map(name => (
                 <div key={name} className={`flex items-center gap-1.5 p-1.5 pl-2 rounded-2xl border transition-all ${
                   participants[name] ? 'bg-white border-blue-100 shadow-sm' : 'bg-gray-100 border-transparent opacity-60'
@@ -159,7 +159,7 @@ export default function EntryPage() {
 
             {/* 合計チェック */}
             <div className={`p-3 rounded-2xl text-center font-black transition-all ${isZero ? 'bg-green-50 text-green-600 ring-1 ring-green-100' : 'bg-red-50 text-red-500 ring-1 ring-red-100'}`}>
-              <div className="text-[9px] uppercase tracking-widest mb-0.5 opacity-70">Total Balance</div>
+              <div className="text-[9px] uppercase tracking-widest mb-0.5 opacity-70">合計チェック</div>
               <div className="text-xl">{totalScore > 0 ? `+${totalScore.toFixed(1)}` : totalScore.toFixed(1)}</div>
               {!isZero && <p className="text-[9px] font-bold mt-0.5 animate-pulse">合計を0に調整してください</p>}
             </div>
@@ -170,7 +170,7 @@ export default function EntryPage() {
                 isZero && !loading ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-200' : 'bg-gray-300 cursor-not-allowed shadow-none'
               }`}
             >
-              {loading ? "SAVING..." : "RECORD SCORE"}
+              {loading ? "SAVING..." : "合計チェック"}
             </button>
           </form>
         </div>

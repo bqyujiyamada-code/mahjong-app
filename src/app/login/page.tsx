@@ -22,7 +22,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gray-900 flex items-center justify-center px-6">
       <form onSubmit={handleLogin} className="w-full max-w-sm bg-white rounded-3xl p-8 shadow-2xl text-center">
         <div className="text-4xl mb-4">🀄</div>
-        <h1 className="text-xl font-black text-gray-800 mb-6 font-sans">Family Mahjong Login</h1>
+        <h1 className="text-xl font-black text-gray-800 mb-6 font-sans">麻雀成績アプリ</h1>
         <input 
           type="password" 
           placeholder="パスワードを入力"
