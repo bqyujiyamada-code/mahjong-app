@@ -2,14 +2,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link"; // 追加
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-
-interface ScoreItem {
-  userId: string;
-  point: number;
-  matchDate: string;
-  gameId: string;
-  season: string;
-}
+import { getSortedSeasons } from "@/lib/season";
+import type { ScoreItem } from "@/lib/types";
 
 export default function HistoryPage() {
   const [allData, setAllData] = useState<ScoreItem[]>([]);
@@ -19,11 +13,10 @@ export default function HistoryPage() {
   useEffect(() => {
     async function fetchData() {
       const res = await fetch("/api/get-all-scores");
-      const data = await res.json();
+      const data: ScoreItem[] = await res.json();
       setAllData(data);
       if (data.length > 0) {
-        const seasons = Array.from(new Set(data.map((item: any) => item.season))).sort().reverse();
-        setSelectedSeason(seasons[0] as string);
+        setSelectedSeason(getSortedSeasons(data)[0]);
       }
       setLoading(false);
     }
@@ -33,16 +26,16 @@ export default function HistoryPage() {
   const chartData = () => {
     const seasonData = allData.filter(item => item.season === selectedSeason);
     const sortedGames = Array.from(new Set(seasonData.map(item => item.gameId))).sort();
-    
-    let userTotals: { [key: string]: number } = {};
-    
+
+    const userTotals: { [key: string]: number } = {};
+
     return sortedGames.map(gameId => {
       const gameResults = seasonData.filter(d => d.gameId === gameId);
       const rawDate = gameResults[0]?.matchDate || "";
       const dateLabel = rawDate ? `${new Date(rawDate).getMonth() + 1}/${new Date(rawDate).getDate()}` : "";
-      
-      const entry: any = { name: dateLabel };
-      
+
+      const entry: Record<string, string | number> = { name: dateLabel };
+
       gameResults.forEach(r => {
         if (!userTotals[r.userId]) userTotals[r.userId] = 0;
         userTotals[r.userId] += r.point;
@@ -81,7 +74,7 @@ export default function HistoryPage() {
             onChange={(e) => setSelectedSeason(e.target.value)}
             className="bg-white border border-gray-300 rounded-lg px-4 py-2 shadow-sm focus:ring-2 focus:ring-blue-500 outline-none font-bold text-gray-700"
           >
-            {Array.from(new Set(allData.map(i => i.season))).sort().reverse().map(s => (
+            {getSortedSeasons(allData).map(s => (
               <option key={s} value={s}>{s}</option>
             ))}
           </select>

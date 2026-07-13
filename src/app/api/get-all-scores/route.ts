@@ -1,33 +1,22 @@
-import { NextResponse } from 'next/server';
-import { DynamoDBClient, ScanCommand } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
-
-// AWS接続設定を環境変数から読み込むように修正
-const client = new DynamoDBClient({
-    region: process.env.AWS_REGION || "ap-northeast-1",
-    credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
-    },
-});
-
-const docClient = DynamoDBDocumentClient.from(client);
+import { NextResponse } from "next/server";
+import { scanAllScores } from "@/lib/db";
 
 export async function GET() {
-    try {
-        const data = await docClient.send(new ScanCommand({ TableName: "MahjongScores" }));
-        
-        const items = data.Items?.map(item => ({
-            userId: item.userId?.S || "Unknown",
-            gameId: item.gameId?.S || "", 
-            point: item.point?.N ? Number(item.point.N) : 0,
-            season: item.season?.S || "未設定",
-            matchDate: item.matchDate?.S || ""
-        })) || [];
-        
-        return NextResponse.json(items);
-    } catch (error) {
-        console.error("DynamoDB Error:", error);
-        return NextResponse.json({ error: (error as Error).message }, { status: 500 });
-    }
+  try {
+    const items = await scanAllScores();
+
+    // 旧データ（season未付与など）に備えたデフォルト値
+    const normalized = items.map((item) => ({
+      userId: item.userId ?? "Unknown",
+      gameId: item.gameId ?? "",
+      point: typeof item.point === "number" ? item.point : Number(item.point) || 0,
+      season: item.season ?? "未設定",
+      matchDate: item.matchDate ?? "",
+    }));
+
+    return NextResponse.json(normalized);
+  } catch (error) {
+    console.error("DynamoDB Error:", error);
+    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+  }
 }

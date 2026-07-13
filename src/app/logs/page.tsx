@@ -1,40 +1,37 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link"; // 追加
-
-interface ScoreItem {
-  userId: string;
-  point: number;
-  matchDate: string;
-  gameId: string;
-  season: string;
-}
+import { PLAYER_NAMES } from "@/lib/players";
+import { getSortedSeasons } from "@/lib/season";
+import type { ScoreItem } from "@/lib/types";
 
 export default function LogsPage() {
   const [allData, setAllData] = useState<ScoreItem[]>([]);
   const [selectedSeason, setSelectedSeason] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = useCallback(async () => {
     const res = await fetch("/api/get-all-scores");
-    const data = await res.json();
+    const data: ScoreItem[] = await res.json();
     setAllData(data);
-    
+
     if (data.length > 0) {
-      const seasons = Array.from(new Set(data.map((item: any) => item.season))).sort().reverse();
-      
+      const seasons = getSortedSeasons(data);
+
       // --- URLパラメータからシーズンを取得するロジックを追加 ---
       const params = new URLSearchParams(window.location.search);
       const seasonParam = params.get('season');
       const targetSeason = (seasonParam && seasons.includes(seasonParam)) ? seasonParam : seasons[0];
-      
-      setSelectedSeason(targetSeason as string);
+
+      setSelectedSeason(targetSeason);
     }
     setLoading(false);
-  };
+  }, []);
 
-  useEffect(() => { fetchData(); }, []);
+  // fetchDataは削除後の再取得(handleDelete)でも使う共有関数のため外出ししている。
+  // setStateはawait後にのみ呼ばれるので同期的なcascading renderは発生しない。
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const handleDelete = async (gameId: string, date: string) => {
     if (!confirm(`${date} の対局データを削除してもよろしいですか？\nこの操作は取り消せません。`)) return;
@@ -47,7 +44,8 @@ export default function LogsPage() {
       });
       if (res.ok) {
         alert("削除しました");
-        fetchData(); 
+        setLoading(true);
+        fetchData();
       } else {
         alert("削除に失敗しました");
       }
@@ -57,7 +55,9 @@ export default function LogsPage() {
   };
 
   const seasonData = allData.filter(item => item.season === selectedSeason);
-  const gamesMap = seasonData.reduce((acc: any, cur) => {
+  type GameRow = { gameId: string; date: string; scores: Record<string, number> };
+
+  const gamesMap = seasonData.reduce<Record<string, GameRow>>((acc, cur) => {
     if (!acc[cur.gameId]) {
       acc[cur.gameId] = { gameId: cur.gameId, date: cur.matchDate, scores: {} };
     }
@@ -65,8 +65,8 @@ export default function LogsPage() {
     return acc;
   }, {});
 
-  const sortedGames = Object.values(gamesMap).sort((a: any, b: any) => b.gameId.localeCompare(a.gameId));
-  const playerNames = ["米本充", "米本弘美", "坂本由美子", "山田真夕", "山田勇次"]; 
+  const sortedGames = Object.values(gamesMap).sort((a, b) => b.gameId.localeCompare(a.gameId));
+  const playerNames = PLAYER_NAMES;
 
   if (loading) return <div className="flex justify-center items-center h-screen font-bold text-blue-500">Loading...</div>;
 
@@ -95,7 +95,7 @@ export default function LogsPage() {
             onChange={(e) => setSelectedSeason(e.target.value)}
             className="bg-white border border-gray-300 rounded-xl px-2 py-2 text-xs font-bold shadow-sm outline-none focus:ring-2 focus:ring-blue-500"
           >
-            {Array.from(new Set(allData.map(i => i.season))).sort().reverse().map(s => (
+            {getSortedSeasons(allData).map(s => (
               <option key={s} value={s}>{s}</option>
             ))}
           </select>
@@ -114,7 +114,7 @@ export default function LogsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {sortedGames.map((game: any) => (
+                {sortedGames.map((game) => (
                   <tr key={game.gameId} className="hover:bg-red-50 transition-colors text-[11px]">
                     <td className="py-4 px-2 font-medium text-gray-500">{game.date.split('-').slice(1).join('/')}</td>
                     {playerNames.map(name => {

@@ -2,11 +2,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link"; // 追加
+import { PLAYER_NAMES } from "@/lib/players";
+import { getSeasonName } from "@/lib/season";
 
 export default function EntryPage() {
   const router = useRouter();
-  // 実際の5名
-  const playerNames = ["米本充", "米本弘美", "坂本由美子", "山田真夕", "山田勇次"]; 
+  const playerNames = PLAYER_NAMES;
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   
   const [participants, setParticipants] = useState<{ [key: string]: boolean }>(
@@ -31,15 +32,6 @@ export default function EntryPage() {
   }, 0);
   
   const isZero = Math.abs(totalScore) < 0.01;
-
-  const getSeasonName = (dateStr: string) => {
-    const d = new Date(dateStr);
-    const year = d.getFullYear();
-    const month = d.getMonth() + 1;
-    if (month >= 4 && month <= 9) return `${year}年度 前期マッチ`;
-    const fiscalYear = month <= 3 ? year - 1 : year;
-    return `${fiscalYear}年度 後期マッチ`;
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,7 +58,6 @@ export default function EntryPage() {
         body: JSON.stringify({
           date,
           scores: finalScores,
-          season: getSeasonName(date)
         }),
       });
       if (res.ok) {

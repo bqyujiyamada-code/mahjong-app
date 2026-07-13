@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { getLatestSeason } from "@/lib/season";
+import type { ScoreItem } from "@/lib/types";
 
 export default function MainMenu() {
   const [topPlayer, setTopPlayer] = useState({ name: "-", point: 0 });
@@ -10,21 +12,18 @@ export default function MainMenu() {
     async function fetchTop() {
       try {
         const res = await fetch("/api/get-all-scores");
-        const data = await res.json();
-        
+        const data: ScoreItem[] = await res.json();
+
         if (data && data.length > 0) {
-          // 1. 全データからユニークなシーズン一覧を作り、降順にソートして「最新」を特定
-          const seasons = Array.from(new Set(data.map((item: any) => item.season)))
-            .sort()
-            .reverse();
-          const latestSeason = seasons[0];
+          // 1. 全データから最新シーズンを特定
+          const latestSeason = getLatestSeason(data);
 
           // 2. 最新シーズンのデータだけをフィルタリング
-          const seasonData = data.filter((d: any) => d.season === latestSeason);
-          
+          const seasonData = data.filter((d) => d.season === latestSeason);
+
           // 3. プレイヤーごとに集計
           const totals: { [key: string]: number } = {};
-          seasonData.forEach((d: any) => {
+          seasonData.forEach((d) => {
             totals[d.userId] = (totals[d.userId] || 0) + d.point;
           });
 

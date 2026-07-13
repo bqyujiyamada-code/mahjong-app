@@ -1,12 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link"; // 追加
-
-interface ScoreItem {
-  userId: string;
-  point: number;
-  season: string;
-}
+import { getSortedSeasons } from "@/lib/season";
+import type { ScoreItem } from "@/lib/types";
 
 interface UserRanking {
   name: string;
@@ -19,28 +15,6 @@ export default function RankingPage() {
   const [seasons, setSeasons] = useState<string[]>([]);
   const [selectedSeason, setSelectedSeason] = useState<string>("");
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchData() {
-      const res = await fetch("/api/get-all-scores");
-      const data: ScoreItem[] = await res.json();
-
-      if (data.length > 0) {
-        const uniqueSeasons = Array.from(new Set(data.map(item => item.season))).sort().reverse();
-        setSeasons(uniqueSeasons);
-        
-        // もしURLパラメータにseasonがあればそれを優先、なければ最新
-        const params = new URLSearchParams(window.location.search);
-        const seasonParam = params.get('season');
-        const targetSeason = seasonParam && uniqueSeasons.includes(seasonParam) ? seasonParam : uniqueSeasons[0];
-        
-        setSelectedSeason(targetSeason);
-        calculateRanking(data, targetSeason);
-      }
-      setLoading(false);
-    }
-    fetchData();
-  }, []);
 
   const calculateRanking = (data: ScoreItem[], season: string) => {
     const seasonData = data.filter(item => item.season === season);
@@ -57,6 +31,28 @@ export default function RankingPage() {
     const sorted = Object.values(userMap).sort((a, b) => b.totalPoint - a.totalPoint);
     setRanking(sorted);
   };
+
+  useEffect(() => {
+    async function fetchData() {
+      const res = await fetch("/api/get-all-scores");
+      const data: ScoreItem[] = await res.json();
+
+      if (data.length > 0) {
+        const uniqueSeasons = getSortedSeasons(data);
+        setSeasons(uniqueSeasons);
+
+        // もしURLパラメータにseasonがあればそれを優先、なければ最新
+        const params = new URLSearchParams(window.location.search);
+        const seasonParam = params.get('season');
+        const targetSeason = seasonParam && uniqueSeasons.includes(seasonParam) ? seasonParam : uniqueSeasons[0];
+
+        setSelectedSeason(targetSeason);
+        calculateRanking(data, targetSeason);
+      }
+      setLoading(false);
+    }
+    fetchData();
+  }, []);
 
   const handleSeasonChange = (season: string) => {
     setSelectedSeason(season);
